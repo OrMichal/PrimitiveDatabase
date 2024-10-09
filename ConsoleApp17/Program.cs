@@ -16,9 +16,10 @@
             while (true)
             {
                 Console.SetCursorPosition(0, 0);
+
                 table.Draw();
 
-                ConsoleKeyInfo info = Console.ReadKey();
+                ConsoleKeyInfo info = Console.ReadKey(true);
                 table.HandleKey(info);
             }
 

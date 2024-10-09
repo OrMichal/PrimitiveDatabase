@@ -38,5 +38,16 @@ namespace ConsoleApp17
                 Rows = rows
             };
         }
+
+        public void SaveToTxt(List<Row> rows)
+        {
+            using(StreamWriter writer = new StreamWriter(FILE))
+            {
+                foreach (Row row in rows)
+                {
+                    writer.WriteLine(row.ToString());
+                }
+            }
+        }
     }
 }
