@@ -12,7 +12,7 @@ namespace ConsoleApp17
     {
         private int selected = 0;
         private int offset = 0;
-        private bool activeChange = false;
+        private bool activeChange = false; 
         private int choiceIndex = 0;
         private bool wantToExit = false;
         private bool wantToRewrite = false;
