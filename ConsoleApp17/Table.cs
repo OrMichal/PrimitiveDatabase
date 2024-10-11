@@ -12,11 +12,12 @@ namespace ConsoleApp17
     {
         private int selected = 0;
         private int offset = 0;
-        private bool activeChange = false; 
         private int choiceIndex = 0;
+        private int changeItemIndex = 0;
+
+        private bool activeChange = false; 
         private bool wantToExit = false;
         private bool wantToRewrite = false;
-        private int changeItemIndex = 0;
         private bool wantToSave = false;
         private bool onNumber = false;
         private bool onText = false;
@@ -33,139 +34,179 @@ namespace ConsoleApp17
             Console.CursorVisible = false;
             if (info.Key == ConsoleKey.UpArrow)
             {
-                if (!activeChange && this.selected > 0)
-                {
-                    this.selected--;
-                }
-                else if (activeChange && this.selected < 6 && this.selected > 0)
-                {
-                    this.selected--;
-                    this.changeItemIndex--;
-                }
-
-                if (this.selected < this.offset)
-                {
-                    this.offset--;
-                }
+                MoveUp();
             }
             else if (info.Key == ConsoleKey.DownArrow)
             {
-                if (!activeChange && this.selected < this.Data.Count - 2)
-                {
-                    this.selected++;
-                }
-                else if (activeChange && this.selected < 5)
-                {
-                    this.selected++;
-                    this.changeItemIndex++;
-                }
-
-
-                if (this.selected >= this.offset + this.Limit)
-                {
-                    this.offset++;
-                }
+                MoveDown();
 
             }
             
             if (info.Key == ConsoleKey.Tab)
             {
-                if(this.activeChange == false)
-                {
-                    this.activeChange = true;
-                }else if (this.activeChange)
-                {
-                    this.activeChange = false;
-                }
-                choiceIndex = this.selected;
-                this.selected = 0;
-                Console.Clear();
+                ToggleChangeMenu();
             }
             
             if(info.Key == ConsoleKey.Escape)
             {
-                activeChange = false;
-                this.selected = 0;
+                ExitChangeMenu();
             }
             
             if(info.Key == ConsoleKey.Enter && wantToExit)
             {
-                activeChange = false;
-                this.selected = 0;
+                ExitChangeMenu();
             }
             
             if(info.Key == ConsoleKey.Backspace && activeChange)
             {
-                this.Data[choiceIndex].Values[this.selected] = rewritten(this.Data[choiceIndex].Values[this.selected]);
-                Console.SetCursorPosition(0,0);
-                Draw();
+                DeleteByOne();
             }
             
             if(char.IsLetterOrDigit(info.KeyChar) && activeChange)
             {
-                if(onText && char.IsLetter(info.KeyChar))
-                {
-                    this.Data[choiceIndex].Values[this.selected] = ChangeData(this.Data[choiceIndex].Values[this.selected], info.KeyChar);
-                    Console.SetCursorPosition(0, 0);
-                    Draw();
-                }
-                else if(onNumber && !onPrimaryKey && char.IsDigit(info.KeyChar))
-                {
-                    this.Data[choiceIndex].Values[this.selected] = ChangeData(this.Data[choiceIndex].Values[this.selected], info.KeyChar);
-                    Console.SetCursorPosition(0, 0);
-                    Draw();
-                }
+                RewriteData(info);
             }
             
             if(info.Key == ConsoleKey.Enter && wantToSave)
             {
-                base.SaveToTxt(this.Data);
-                wantToSave = false;
-                Console.WriteLine("Your changes has been successfully saved");
-                Thread.Sleep(400);
-                activeChange = false;
+                SaveChanges();
             }
+        }
+
+        private void MoveUp()
+        {
+            if (!activeChange && this.selected > 0)
+            {
+                this.selected--;
+            }
+            else if (activeChange && this.selected < 6 && this.selected > 0)
+            {
+                this.selected--;
+                this.changeItemIndex--;
+            }
+
+            if (this.selected < this.offset)
+            {
+                this.offset--;
+            }
+        }
+        private void MoveDown()
+        {
+            if (!activeChange && this.selected < this.Data.Count - 2)
+            {
+                this.selected++;
+            }
+            else if (activeChange && this.selected < 5)
+            {
+                this.selected++;
+                this.changeItemIndex++;
+            }
+
+
+            if (this.selected >= this.offset + this.Limit)
+            {
+                this.offset++;
+            }
+        }
+        private void ToggleChangeMenu()
+        {
+            if (this.activeChange == false)
+            {
+                this.activeChange = true;
+            }
+            else if (this.activeChange)
+            {
+                this.activeChange = false;
+            }
+            choiceIndex = this.selected;
+            this.selected = 0;
+            Console.Clear();
+        }
+        private void ExitChangeMenu()
+        {
+            activeChange = false;
+            this.selected = 0;
+        }
+        private void DeleteByOne()
+        {
+            this.Data[choiceIndex].Values[this.selected] = rewritten(this.Data[choiceIndex].Values[this.selected]);
+            Console.SetCursorPosition(0, 0);
+            Draw();
+        }
+        private void RewriteData(ConsoleKeyInfo info)
+        {
+            if (onText && char.IsLetter(info.KeyChar))
+            {
+                this.Data[choiceIndex].Values[this.selected] = ChangeData(this.Data[choiceIndex].Values[this.selected], info.KeyChar);
+                Console.SetCursorPosition(0, 0);
+                Draw();
+            }
+            else if (onNumber && !onPrimaryKey && char.IsLetterOrDigit(info.KeyChar))
+            {
+                this.Data[choiceIndex].Values[this.selected] = ChangeData(this.Data[choiceIndex].Values[this.selected], info.KeyChar);
+                Console.SetCursorPosition(0, 0);
+                Draw();
+            }
+        }
+        private void SaveChanges()
+        {
+            base.SaveToTxt(this.Data, this.Headers);
+            wantToSave = false;
+            Console.WriteLine("Your changes has been successfully saved");
+            Thread.Sleep(400);
+            activeChange = false;
         }
 
         public void Draw()
         {
-            if (this.activeChange == false)
+            if (!activeChange)
             {
-                int[] widths = this.Widths();
-
-                this.DrawLine(widths);
-                this.DrawRow(this.Headers, widths);
-                this.DrawLine(widths);
-                if(this.Data.Count > (offset + Limit))
-                {
-                    for (int i = offset; i < offset + Limit; i++)
-                    {
-                        Row row = this.Data[i];
-
-                        if (i == this.selected)
-                        {
-                            Console.BackgroundColor = ConsoleColor.White;
-                            Console.ForegroundColor = ConsoleColor.Black;
-                            this.DrawRow(row.Values, widths);
-                            Console.ResetColor();
-                        }
-                        else
-                        {
-                            Console.ResetColor();
-                            this.DrawRow(row.Values, widths);
-                        }
-
-                    }
-                }
-            
-
-                this.DrawLine(widths);
-                
+                DrawTable();
             }
-            else if (this.activeChange == true)
+            else
+            {
+                DrawChangeMenu();
+            }
+        }
+
+        private void DrawTable()
+        {
+            int[] widths = this.Widths();
+
+            this.DrawLine(widths);
+            this.DrawRow(this.Headers, widths);
+            this.DrawLine(widths);
+            if (this.Data.Count > (offset + Limit))
+            {
+                for (int i = offset; i < offset + Limit; i++)
+                {
+                    Row row = this.Data[i];
+
+                    if (i == this.selected)
+                    {
+                        Console.BackgroundColor = ConsoleColor.White;
+                        Console.ForegroundColor = ConsoleColor.Black;
+                        this.DrawRow(row.Values, widths);
+                        Console.ResetColor();
+                    }
+                    else
+                    {
+                        Console.ResetColor();
+                        this.DrawRow(row.Values, widths);
+                    }
+
+                }
+            }
+
+            this.DrawLine(widths);
+        }
+
+        private void DrawChangeMenu()
+        {
+            if (this.activeChange == true)
             {
                 Console.ResetColor();
-                Console.SetCursorPosition(0,0);
+                Console.SetCursorPosition(0, 0);
 
                 string[] operations = { "cancel", "apply & exit" };
 
@@ -173,20 +214,21 @@ namespace ConsoleApp17
                 {
                     if (i == this.selected)
                     {
-                        
-                        if(i == this.Data[choiceIndex].Values.Count() + 0)
+
+                        if (i == this.Data[choiceIndex].Values.Count() + 0)
                         {
                             wantToExit = true;
-                        }else
+                        }
+                        else
                         {
                             wantToExit = false;
                         }
 
-                        if(i == 0)
+                        if (i == 0)
                         {
                             onPrimaryKey = true;
                         }
-                        else if ( i > 1 && i < this.Data[choiceIndex].Values.Count() && int.TryParse(this.Data[choiceIndex].Values[i], out int _))
+                        else if (i > 1 && i < this.Data[choiceIndex].Values.Count() && int.TryParse(this.Data[choiceIndex].Values[i], out int _))
                         {
                             onNumber = true;
                             onText = false;
@@ -194,11 +236,11 @@ namespace ConsoleApp17
                         }
                         else
                         {
-                            onNumber= false;
+                            onNumber = false;
                             onText = true;
                         }
 
-                        if(i < this.Data[choiceIndex].Values.Count() && wantToRewrite)
+                        if (i < this.Data[choiceIndex].Values.Count() && wantToRewrite)
                         {
                             wantToRewrite = false;
                         }
@@ -211,11 +253,11 @@ namespace ConsoleApp17
                             DrawItemForChange(this.Data[choiceIndex].Values, operations, i);
                         }
 
-                        if(i == 5)
+                        if (i == 5)
                         {
                             wantToSave = true;
                         }
-                        
+
 
                     }
                     else

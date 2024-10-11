@@ -39,10 +39,11 @@ namespace ConsoleApp17
             };
         }
 
-        public void SaveToTxt(List<Row> rows)
+        public void SaveToTxt(List<Row> rows, string[] headers)
         {
             using(StreamWriter writer = new StreamWriter(FILE))
             {
+                writer.WriteLine($"{headers[0]};{headers[1]};{headers[2]};{headers[3]}");
                 foreach (Row row in rows)
                 {
                     writer.WriteLine($"{row.Values[0]};{row.Values[1]};{row.Values[2]};{row.Values[3]}");
