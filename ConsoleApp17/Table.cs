@@ -18,6 +18,9 @@ namespace ConsoleApp17
         private bool wantToRewrite = false;
         private int changeItemIndex = 0;
         private bool wantToSave = false;
+        private bool onNumber = false;
+        private bool onText = false;
+        private bool onPrimaryKey = false;
 
         public string[] Headers { get; set; }
 
@@ -30,7 +33,7 @@ namespace ConsoleApp17
             Console.CursorVisible = false;
             if (info.Key == ConsoleKey.UpArrow)
             {
-                if (!activeChange && this.selected >= 0)
+                if (!activeChange && this.selected > 0)
                 {
                     this.selected--;
                 }
@@ -64,7 +67,8 @@ namespace ConsoleApp17
                 }
 
             }
-            else if (info.Key == ConsoleKey.E)
+            
+            if (info.Key == ConsoleKey.Tab)
             {
                 if(this.activeChange == false)
                 {
@@ -77,30 +81,49 @@ namespace ConsoleApp17
                 this.selected = 0;
                 Console.Clear();
             }
-            else if(info.Key == ConsoleKey.Escape)
+            
+            if(info.Key == ConsoleKey.Escape)
             {
                 activeChange = false;
+                this.selected = 0;
             }
-            else if(info.Key == ConsoleKey.Enter && wantToExit)
+            
+            if(info.Key == ConsoleKey.Enter && wantToExit)
             {
                 activeChange = false;
+                this.selected = 0;
             }
-            else if(info.Key == ConsoleKey.Backspace && activeChange)
+            
+            if(info.Key == ConsoleKey.Backspace && activeChange)
             {
                 this.Data[choiceIndex].Values[this.selected] = rewritten(this.Data[choiceIndex].Values[this.selected]);
-                Console.Clear();
+                Console.SetCursorPosition(0,0);
                 Draw();
             }
-            else if(!char.IsDigit(info.KeyChar) && activeChange)
+            
+            if(char.IsLetterOrDigit(info.KeyChar) && activeChange)
             {
-                this.Data[choiceIndex].Values[this.selected] = ChangeData(this.Data[choiceIndex].Values[this.selected], info.KeyChar);
-                Console.Clear();
-                Draw();
-            }else if(info.Key == ConsoleKey.Enter && wantToSave)
+                if(onText && char.IsLetter(info.KeyChar))
+                {
+                    this.Data[choiceIndex].Values[this.selected] = ChangeData(this.Data[choiceIndex].Values[this.selected], info.KeyChar);
+                    Console.SetCursorPosition(0, 0);
+                    Draw();
+                }
+                else if(onNumber && !onPrimaryKey && char.IsDigit(info.KeyChar))
+                {
+                    this.Data[choiceIndex].Values[this.selected] = ChangeData(this.Data[choiceIndex].Values[this.selected], info.KeyChar);
+                    Console.SetCursorPosition(0, 0);
+                    Draw();
+                }
+            }
+            
+            if(info.Key == ConsoleKey.Enter && wantToSave)
             {
                 base.SaveToTxt(this.Data);
                 wantToSave = false;
                 Console.WriteLine("Your changes has been successfully saved");
+                Thread.Sleep(400);
+                activeChange = false;
             }
         }
 
@@ -159,6 +182,22 @@ namespace ConsoleApp17
                             wantToExit = false;
                         }
 
+                        if(i == 0)
+                        {
+                            onPrimaryKey = true;
+                        }
+                        else if ( i > 1 && i < this.Data[choiceIndex].Values.Count() && int.TryParse(this.Data[choiceIndex].Values[i], out int _))
+                        {
+                            onNumber = true;
+                            onText = false;
+                            onPrimaryKey = false;
+                        }
+                        else
+                        {
+                            onNumber= false;
+                            onText = true;
+                        }
+
                         if(i < this.Data[choiceIndex].Values.Count() && wantToRewrite)
                         {
                             wantToRewrite = false;
@@ -166,6 +205,7 @@ namespace ConsoleApp17
                         else
                         {
                             wantToRewrite = false;
+                            onNumber = false;
                             Console.BackgroundColor = ConsoleColor.White;
                             Console.ForegroundColor = ConsoleColor.Black;
                             DrawItemForChange(this.Data[choiceIndex].Values, operations, i);

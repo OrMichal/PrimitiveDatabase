@@ -45,7 +45,7 @@ namespace ConsoleApp17
             {
                 foreach (Row row in rows)
                 {
-                    writer.WriteLine(row.ToString());
+                    writer.WriteLine($"{row.Values[0]};{row.Values[1]};{row.Values[2]};{row.Values[3]}");
                 }
             }
         }
